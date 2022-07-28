@@ -1,7 +1,7 @@
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
-import operator
+import os
 
 
 def detect_lines(image):
@@ -32,42 +32,42 @@ def optimize_lines(lines):
 
     # [array([[1077, 2127, 1077,  210]], dtype=int32), array([[ 357, 2126,  357, 1489]], dtype=int32),......]
     # lines 类型是 list, 它的元素是 array, 不知道这种混合模式怎么排序, 查查算法自己实现
-    # 对于9宫格, 只需要确定3个 x 和3个 y, 即可判断出每一宫的范围
-    x_list = []
+    # 对于9宫格, 只需要确定4个 x 和4个 y, 即可判断出每一宫的矩形范围
+    v_list = []
     for i in range(len(horizontal_lines)):
         x1, y1, x2, y2 = horizontal_lines[i].reshape(4)
-        x_list.append(x1)
+        v_list.append(x1)
 
-    y_list = []
+    h_list = []
     for i in range(len(vertical_lines)):
         x1, y1, x2, y2 = vertical_lines[i].reshape(4)
-        x_list.append(y1)
+        h_list.append(y1)
 
-    print("x_list:", y_list)  # [1077, 357, 717, 360, 720, 0, 719, 716, 357]
-    x_list.sort(key=None, reverse=False)
-    print("x_list sort: ", y_list)  # [0, 357, 357, 360, 716, 717, 719, 720, 1077]
-    print(len(y_list))
+    print("v_list:", h_list)  # [1077, 357, 717, 360, 720, 0, 719, 716, 357]
+    v_list.sort(key=None, reverse=False)
+    print("v_list sort: ", v_list)  # [0, 357, 357, 360, 716, 717, 719, 720, 1077]
+    print(len(v_list))
 
-    print("y_list:", y_list)  # [1077, 357, 717, 360, 720, 0, 719, 716, 357]
-    y_list.sort(key=None, reverse=False)
-    print("y_list sort: ", y_list)  # [0, 357, 357, 360, 716, 717, 719, 720, 1077]
-    print(len(y_list))
+    print("h_list:", h_list)  # [1077, 357, 717, 360, 720, 0, 719, 716, 357]
+    h_list.sort(key=None, reverse=False)
+    print("h_list sort: ", h_list)  # [0, 357, 357, 360, 716, 717, 719, 720, 1077]
+    print(len(h_list))
 
     # 5个像素内的 x 值去重复(计算均值), 由于宫格线有几个像素宽度导致识别成多条直线
     x_res = []
     y_res = []
     tmp_stack = []
-    for i in range(len(x_list)):    # 注意如果 len 是 10, i 只会取到 0-9
+    for i in range(len(v_list)):    # 注意如果 len 是 10, i 只会取到 0-9
         print(i)
-        # print(x_list[j])
+        # print(v_list[j])
         # 首元素没有前一元素
         if i == 0:
-            tmp_stack.append(x_list[i])
+            tmp_stack.append(v_list[i])
             continue
 
         # 如果与前一元素贴近就压入临时栈 tmp_stack, 等待计算均值
-        if abs(x_list[i] - x_list[i - 1]) <= 5:
-            tmp_stack.append(x_list[i])
+        if abs(v_list[i] - v_list[i - 1]) <= 5:
+            tmp_stack.append(v_list[i])
             continue
         else:
             # 未检测到相近值, 计算临时栈之后持久化
@@ -76,53 +76,40 @@ def optimize_lines(lines):
             print(temp)
             x_res.append(temp)
 
-        if i == (len(x_list)-1):
+        if i == (len(v_list)-1):
             # 最后一个元素与前值不相近, 直接持久化
-            x_res.append(x_list[i])
+            x_res.append(v_list[i])
         else:
             # 非最后元素, 压入临时栈
             tmp_stack.clear()
-            tmp_stack.append(x_list[i])
+            tmp_stack.append(v_list[i])
     print(x_res)
 
-    for i in range(len(y_list)):    # 注意如果 len 是 10, i 只会取到 0-9
-        print(i)
-        # print(y_list[j])
+    for i in range(len(h_list)):    # 注意如果 len 是 10, i 只会取到 0-9
         # 首元素没有前一元素
         if i == 0:
-            tmp_stack.append(y_list[i])
+            tmp_stack.append(h_list[i])
             continue
 
         # 如果与前一元素贴近就压入临时栈 tmp_stack, 等待计算均值
-        if abs(y_list[i] - y_list[i - 1]) <= 5:
-            tmp_stack.append(y_list[i])
+        if abs(h_list[i] - h_list[i - 1]) <= 5:
+            tmp_stack.append(h_list[i])
             continue
         else:
-            # 未检测到相近值, 计算临时栈之后持久化
+            # 未检测到后续相近值, 计算临时栈均值并持久化
             print("tmp_stack: ", tmp_stack)
             temp = int(sum(tmp_stack) / len(tmp_stack))
             print(temp)
             y_res.append(temp)
 
-        if i == (len(y_list)-1):
-            # 最后一个元素与前值不相近, 直接持久化
-            y_res.append(y_list[i])
+        if i == (len(h_list)-1):
+            # 是最末元素, 与前值不相近, 直接持久化
+            y_res.append(h_list[i])
         else:
-            # 非最后元素, 压入临时栈
+            # 非最末元素, 与前值不相近, 压入临时栈
             tmp_stack.clear()
-            tmp_stack.append(y_list[i])
+            tmp_stack.append(h_list[i])
     print(y_res)
-
-    # merge_lines = []
-    # merge_lines.extend(horizontal_lines)
-    # merge_lines.extend(vertical_lines)
-    # lines_reshape = []
-    # for line in horizontal_lines:
-    #     print(line.reshape(4))
-    #     lines_reshape.append(line.reshape(4))
-    #
-    # lines_reshape.sort(key=lambda x: [x][0][0], )
-    # print(horizontal_lines)
 
 
 def drawing_lines(image, lines):
