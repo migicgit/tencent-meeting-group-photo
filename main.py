@@ -1,7 +1,9 @@
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
-import os
+
+
+# import os
 
 
 def detect_lines(image):
@@ -57,7 +59,7 @@ def optimize_lines(lines):
     x_res = []
     y_res = []
     tmp_stack = []
-    for i in range(len(v_list)):    # 注意如果 len 是 10, i 只会取到 0-9
+    for i in range(len(v_list)):  # 注意如果 len 是 10, i 只会取到 0-9
         print(i)
         # print(v_list[j])
         # 首元素没有前一元素
@@ -76,7 +78,7 @@ def optimize_lines(lines):
             print(temp)
             x_res.append(temp)
 
-        if i == (len(v_list)-1):
+        if i == (len(v_list) - 1):
             # 最后一个元素与前值不相近, 直接持久化
             x_res.append(v_list[i])
         else:
@@ -85,7 +87,7 @@ def optimize_lines(lines):
             tmp_stack.append(v_list[i])
     print(x_res)
 
-    for i in range(len(h_list)):    # 注意如果 len 是 10, i 只会取到 0-9
+    for i in range(len(h_list)):  # 注意如果 len 是 10, i 只会取到 0-9
         # 首元素没有前一元素
         if i == 0:
             tmp_stack.append(h_list[i])
@@ -102,7 +104,7 @@ def optimize_lines(lines):
             print(temp)
             y_res.append(temp)
 
-        if i == (len(h_list)-1):
+        if i == (len(h_list) - 1):
             # 是最末元素, 与前值不相近, 直接持久化
             y_res.append(h_list[i])
         else:
@@ -121,10 +123,12 @@ def drawing_lines(image, lines):
         plt.show()
 
 
-img = cv.imread("photo.source\\3.jpg")
-print(img.shape)
-print()
+if __name__ == '__main__':
+    img = cv.imread("photo.source\\3.jpg")
+    print(img.shape)
+    print()
 
-mylines = detect_lines(img)
-optimize_lines(mylines)
-drawing_lines(img, mylines)
+    mylines = detect_lines(img)
+    optimize_lines(mylines)
+    drawing_lines(img, mylines)
+
